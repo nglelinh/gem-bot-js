@@ -1,4 +1,8 @@
 class GemSwapInfo {
+    //info after gems blow up => next match
+    weight = 0;
+    gemModifiers = [];
+
     constructor(index1, index2, sizeMatch, type)
     {
         this.index1 = index1;
