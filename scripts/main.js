@@ -35,7 +35,7 @@ var currentPlayerId;
 var grid;
 
 const username = "";
-const token = "bot";
+const token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJsaW5oLm5ndXllbiIsImF1dGgiOiJST0xFX1VTRVIiLCJMQVNUX0xPR0lOX1RJTUUiOjE2NTI4NTg1MjIwNTIsImV4cCI6MTY1NDY1ODUyMn0.hlUo5ztZDqlHnCOVe6cFaVB8N3Rj99_GTKKVFr53bxvsXRyNF91ZcwZk_JpYEYR-9qotsPaDCalIN2u8Gx3aQw";
 var visualizer = new Visualizer({ el: '#visual' });
 var params = window.params;
 var strategy = window.strategy;
@@ -243,6 +243,8 @@ function OnExtensionResponse(event) {
 		case "PLAYER_JOINED_GAME":
 			sfs.send(new SFS2X.ExtensionRequest(I_AM_READY, new SFS2X.SFSObject(), room));
 			break;
+		case "LIST_FRIEND_REQUEST":
+			console.log('waiting list friend')
 	}
 }
 
@@ -268,7 +270,7 @@ function StartGame(gameSession, room) {
 	// Gems
 	grid = new Grid(gameSession.getSFSArray("gems"), null, botPlayer.getRecommendGemType());
 	currentPlayerId = gameSession.getInt("currentPlayerId");
-	trace("StartGame ");
+	trace("StartGame with currentPlayerId " + currentPlayerId);
 
 	// log("grid :" , grid);
 
@@ -285,6 +287,7 @@ function StartGame(gameSession, room) {
 	});
 
 	if (strategy) {
+		trace('strategy loading .... : ')
 		strategy.setGame({
 			game: gameSession,
 			grid,
@@ -294,6 +297,8 @@ function StartGame(gameSession, room) {
 
 		strategy.addSwapGemHandle(SendSwapGem);
 		strategy.addCastSkillHandle(SendCastSkill);
+	} else {
+		trace('NO strategy loaded!!!')
 	}
 
 }
@@ -371,14 +376,18 @@ function StartTurn(param) {
 		visualizer.snapShot();
 		currentPlayerId = param.getInt("currentPlayerId");
 		if (!isBotTurn()) {
-			trace("not isBotTurn");
+			trace("--- isEnemyTurn ---");
 			return;
 		}
 
+		trace("--- isBotTurn ---");
+
 		if (strategy) {
+			trace("Playing with strategy")
 			strategy.playTurn();
 			return;
 		}
+		trace("Playing without strategy")
 		let heroFullMana = botPlayer.anyHeroFullMana();
 		if (heroFullMana != null) {
 			SendCastSkill(heroFullMana)
@@ -431,7 +440,7 @@ function SendCastSkill(heroCastSkill, { targetId, selectedGem, gemIndex, isTarge
 }
 
 function SendSwapGem(swap) {
-	let indexSwap = swap ? swap.getIndexSwapGem() : grid.recommendSwapGem();
+	let indexSwap = swap ? swap.getIndexSwapGem() : grid.recommendSwapGem(botPlayer);
 
 	log("sendExtensionRequest()|room:" + room.Name + "|extCmd:" + SWAP_GEM + "|index1: " + indexSwap[0] + " index2: " + indexSwap[1]);
 	trace("sendExtensionRequest()|room:" + room.Name + "|extCmd:" + SWAP_GEM + "|index1: " + indexSwap[0] + " index2: " + indexSwap[1]);
@@ -497,7 +506,7 @@ function HandleHeroes(paramz) {
 
 
 var log = function (msg) {
-	console.log("truong : " + "|" + msg);
+	console.log("main.js log : " + currentPlayerId + "|" + msg);
 }
 
 
