@@ -33,17 +33,46 @@ class Player
     }
 
     anyHeroFullMana() {
-        let arr = this.heroes.filter(hero => hero.isAlive() && hero.isFullMana());
+        let fullManaHeroes = this.heroes.filter(hero => hero.isAlive() && hero.isFullMana());
 
-        let hero = arr != null && arr != undefined && arr.length > 0 ? arr[0] : null;
-        return hero;
+        let monks = fullManaHeroes.filter(hero => hero.isMonk());
+        let monk = monks != null && monks.length > 0 ? monks[0] : null;
+        let notMonksFullMana = fullManaHeroes.filter(hero => !hero.isMonk());
+        let notMonkFullMana = notMonksFullMana != null  && notMonksFullMana.length > 0 ? notMonksFullMana[0] : null;
+
+        if (monk != null && notMonkFullMana != null && !monk.isMonkCasted()) {
+            console.log('Monk full mana want to cast (not casted yet)')
+            return monk;
+        }
+
+        return fullManaHeroes != null && fullManaHeroes != undefined && fullManaHeroes.length > 0 ? fullManaHeroes[0] : null;
+    }
+
+    monkNotCast() {
+        console.log('Check monkNotCast ' + this.heroes)
+        let monks = this.heroes.filter((hero) => {
+            console.log('monkNotCast ' + hero.id)
+            return hero.isMonk()
+        });
+        console.log('Check monkNotCast MONKS' + monks.length)
+        let monk = monks != null && monks.length > 0 ? monks[0] : null;
+
+        console.log('Check monkNotCast ' + monk)
+        if (monk != null && monk != undefined && monk.isAlive()) {
+            console.log('Check monkNotCast --- Monk exit ' + monk.isMonkCasted().toString())
+            if (!monk.isMonkCasted()) {
+                console.log('Monk not cast yet')
+                return true;
+            }
+        }
+
+        return false;
     }
 
     firstHeroAlive() {
-        let arr = this.heroes.filter(hero => hero.isAlive());
+        let aliveHeroes = this.heroes.filter(hero => hero.isAlive());
 
-        let hero = arr != null && arr != undefined && arr.length > 0 ? arr[0] : null;
-        return hero;
+        return aliveHeroes != null && aliveHeroes != undefined && aliveHeroes.length > 0 ? aliveHeroes[0] : null;
     }
 
     getRecommendGemType() {

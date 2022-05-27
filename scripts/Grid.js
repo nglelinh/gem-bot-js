@@ -33,7 +33,7 @@ class Grid {
         }
     }
 
-    recommendSwapGem() {
+    recommendSwapGem(botPlayer) {
         let listMatchGem = this.suggestMatch();
 
         console.log("recommendSwapGem: ", listMatchGem);
@@ -42,10 +42,39 @@ class Grid {
             return [-1, -1];
         }
 
+        let hasExtraTurn = listMatchGem.find(gemMatch => {
+            return !!gemMatch.gemModifiers.find(modifier => modifier === GemModifier.EXTRA_TURN)
+        });
+
+        if (hasExtraTurn) {
+            return hasExtraTurn.getIndexSwapGem();
+        }
+
+        let hasExplodeTurn = listMatchGem.find(gemMatch => {
+            return !!gemMatch.gemModifiers.find(modifier => Array.from([6,7,8]).includes(modifier))
+        });
+
+        if (hasExplodeTurn) {
+            return hasExplodeTurn.getIndexSwapGem();
+        }
+
         let matchGemSizeThanFour = listMatchGem.find(gemMatch => gemMatch.sizeMatch > 4);
 
         if (matchGemSizeThanFour) {
             return matchGemSizeThanFour.getIndexSwapGem();
+        }
+
+        console.log("myHeroGemType: ", this.myHeroGemType, "| Array.from(this.myHeroGemType)", Array.from(this.myHeroGemType));
+
+        let matchHeroGemType = null;
+        if (botPlayer.monkNotCast()) {
+            console.log('GEM CHECKING monk not cast then prefer swap for MONK')
+            matchHeroGemType = listMatchGem.find(gemMatch => Array.from([1,2]).includes(gemMatch.type));
+
+            if (matchHeroGemType) {
+                console.log("matchHeroGemType swap for MONK", matchHeroGemType);
+                return matchHeroGemType.getIndexSwapGem();
+            }
         }
 
         let matchGemSizeThanThree = listMatchGem.find(gemMatch => gemMatch.sizeMatch > 3);
@@ -53,23 +82,21 @@ class Grid {
         if (matchGemSizeThanThree) {
             return matchGemSizeThanThree.getIndexSwapGem();
         }
-
-        let matchGemSword = listMatchGem.find(gemMatch => gemMatch.type == GemType.SWORD);
+        // prefer SWORD
+        let matchGemSword = listMatchGem.find(gemMatch => gemMatch.type === GemType.SWORD);
 
         if (matchGemSword) {
             return matchGemSword.getIndexSwapGem();
         }
 
-        console.log("myHeroGemType: ", this.myHeroGemType, "| Array.from(this.myHeroGemType)", Array.from(this.myHeroGemType));
+        console.log('GEM CHECKING monk already cast')
+        matchHeroGemType = listMatchGem.find(gemMatch => Array.from(this.myHeroGemType).includes(gemMatch.type));
 
-        let matchGemType = listMatchGem.find(gemMatch => Array.from(this.myHeroGemType).includes(gemMatch.type));
+        console.log("matchGem: ", matchHeroGemType);
 
-        console.log("matchGem: ", matchGemType);
-
-
-        if (matchGemType) {
-            console.log("matchGemType ");
-            return matchGemType.getIndexSwapGem();
+        if (matchHeroGemType) {
+            console.log("matchHeroGemType ");
+            return matchHeroGemType.getIndexSwapGem();
         }
 
         console.log("listMatchGem[0].getIndexSwapGem() ", listMatchGem[0].getIndexSwapGem());
@@ -129,11 +156,17 @@ class Grid {
 
         let matchGems = this.matchesAt(parseInt(currentGem.x), parseInt(currentGem.y));
 
+        let swapInfo = new GemSwapInfo(currentGem.index, swapGem.index, matchGems.length, currentGem.type)
+
+        this.checkGemModifiers(swapInfo, matchGems);
+
+        this.calculateWeight(swapInfo);
+
         this.swap(currentGem, swapGem);
 
 
         if (matchGems.size > 0) {
-            listMatchGem.push(new GemSwapInfo(currentGem.index, swapGem.index, matchGems.length, currentGem.type));
+            listMatchGem.push(swapInfo);
         }
     }
 
@@ -205,7 +238,6 @@ class Grid {
             }
             xRight++;
         }
-        if (hor.length >= 3) hor.forEach(gem => res.add(gem));
 
         // check vertically
         let ver = [];
@@ -231,7 +263,11 @@ class Grid {
             }
             yAbove++;
         }
-        if (ver.length >= 3) ver.forEach(gem => res.add(gem));
+
+        if (hor.length >= 3 || ver.length >= 3) {
+            hor.forEach(gem => res.add(gem));
+            ver.forEach(gem => res.add(gem));
+        }
 
         return res;
     }
@@ -279,13 +315,13 @@ class Grid {
         switch(gem.modifier) {
             case GemModifier.EXPLODE_HORIZONTAL: {
                 this.performExplodeHorizontal(gem, distinction);
-            } 
+            }
             case GemModifier.EXPLODE_VERTICAL: {
                 this.performExplodeVertical(gem, distinction);
-            } 
+            }
             case GemModifier.EXPLODE_SQUARE: {
                 this.performExplodeSquare(gem, distinction);
-            } 
+            }
         }
     }
 
@@ -323,7 +359,7 @@ class Grid {
         for(const gem of gems) {
             this.distinctGem(gem, distinction);
         }
-        
+
     }
 
     maxLinearMatch(gems) {
@@ -381,5 +417,18 @@ class Grid {
         cloned.gemTypes = new Set(Array.from(this.gemTypes));
         cloned.myHeroGemType = new Set(Array.from(this.myHeroGemType));
         return cloned;
+    }
+
+    calculateWeight(swapInfo) {
+        swapInfo.weight = 0;
+    }
+
+    checkGemModifiers(swapInfo, matchGems) {
+        matchGems.forEach(gem => {
+            console.log('Gem modifier ' + gem.modifier)
+            if (gem.modifier !== GemModifier.NONE) {
+                swapInfo.gemModifiers.push(gem.modifier)
+            }
+        })
     }
 }
