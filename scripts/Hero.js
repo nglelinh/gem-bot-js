@@ -21,6 +21,26 @@ const HeroIdEnum = {
     SNAKE:105,
     GIANT_SNAKE:106
 };
+
+const HeroManaType = { //getSFSArray("gemTypes")
+    0: [5,2],
+    1 : [1,2],
+    3 : [5,6],
+};
+
+const HeroManaMax = { //getInt("maxMana")
+    0: 8,
+    1: 7,
+    2: 9,
+    3: 9,
+    4: 9,
+    'SEA_SPIRIT' : 6,
+    6: 6,
+    7: 6,
+    8: 6,
+    9: 9,
+    100: 9
+};
   
 
 class Hero {
@@ -42,6 +62,14 @@ class Hero {
             this.gemTypes.push(gemName);
             this.gems.push(GemType[gemName]);
         }
+    }
+
+    isMonk() {
+        return this.id == 'MONK';
+    }
+
+    isMonkCasted() {
+        return this.isMonk() && this.attack > 7;
     }
 
     updateHero(objHero) {
